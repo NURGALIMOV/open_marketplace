@@ -1,0 +1,73 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: open-market-placer
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/open_market_placer}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+  
+  jackson:
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+    serialization:
+      write-dates-as-timestamps: false
+
+# Security configuration
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:MyVerySecureJWTSecretKeyThatIsAtLeast32CharactersLong123}
+      expiration: 86400000 # 24 hours in milliseconds
+    encryption:
+      master-key: ${ENCRYPTION_MASTER_KEY:MySecureEncryptionKeyFor256BitAES}
+    admin:
+      initial-email: ${ADMIN_INITIAL_EMAIL:admin@example.com}
+      initial-password: ${ADMIN_INITIAL_PASSWORD:admin123}
+  
+  ozon:
+    api:
+      base-url: https://api-seller.ozon.ru
+      timeout: 30000
+      retry-attempts: 3
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging
+logging:
+  level:
+    com.openmarket: DEBUG
+    org.springframework.security: DEBUG
+    org.liquibase: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
