@@ -5,3 +5,6 @@ export { ShopsPage } from './ShopsPage';
 export { ShopDetailPage } from './ShopDetailPage';
 export { NomenclaturePage } from './NomenclaturePage';
 export { AdminPage } from './AdminPage';
+export { CounterpartiesPage } from './CounterpartiesPage';
+export { ReceiptsPage } from './ReceiptsPage';
+export { ReceiptDetailPage } from './ReceiptDetailPage';

@@ -70,6 +70,103 @@ export interface UpdateResult {
     duration: number;
 }
 
+// Counterparty Contract types
+export interface CounterpartyContract {
+    id: string;
+    counterparty: string;
+    contract: string;
+    contractDate?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateCounterpartyContractRequest {
+    counterparty: string;
+    contract: string;
+    contractDate?: string;
+}
+
+export interface UpdateCounterpartyContractRequest {
+    counterparty?: string;
+    contract?: string;
+    contractDate?: string;
+}
+
+// Receipt types
+export interface Receipt {
+    id: string;
+    name: string;
+    requestNumber?: string;
+    receiptDate?: string;
+    counterpartyContractId?: string;
+    counterpartyName?: string;
+    contract?: string;
+    totalCost: number;
+    itemsCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateReceiptRequest {
+    name: string;
+    requestNumber?: string;
+    receiptDate?: string;
+    counterpartyContractId?: string;
+}
+
+export interface UpdateReceiptRequest {
+    name?: string;
+    requestNumber?: string;
+    receiptDate?: string;
+    counterpartyContractId?: string;
+}
+
+// Receipt Item types
+export interface ReceiptItem {
+    id: string;
+    sku?: string;
+    article?: string;
+    quantity?: number;
+    cost?: number;
+    totalCost: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateReceiptItemRequest {
+    sku?: string;
+    article?: string;
+    quantity?: number;
+    cost?: number;
+}
+
+export interface UpdateReceiptItemRequest {
+    sku?: string;
+    article?: string;
+    quantity?: number;
+    cost?: number;
+}
+
+// Excel Import types
+export interface ExcelImportRequest {
+    mapping: Record<string, string>; // field -> column mapping
+    hasHeader?: boolean;
+    strict?: boolean;
+}
+
+export interface ExcelImportResponse {
+    rowsProcessed: number;
+    rowsCreated: number;
+    totalCostDelta: number;
+    errors: ImportError[];
+}
+
+export interface ImportError {
+    row: number;
+    column?: string;
+    error: string;
+}
+
 export interface PageResponse<T> {
     content: T[];
     totalElements: number;

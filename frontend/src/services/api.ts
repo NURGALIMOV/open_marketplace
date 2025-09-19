@@ -10,7 +10,17 @@ import {
     NomenclatureItem,
     NomenclatureStats,
     UpdateResult,
-    PageResponse
+    PageResponse,
+    CounterpartyContract,
+    CreateCounterpartyContractRequest,
+    UpdateCounterpartyContractRequest,
+    Receipt,
+    CreateReceiptRequest,
+    UpdateReceiptRequest,
+    ReceiptItem,
+    CreateReceiptItemRequest,
+    UpdateReceiptItemRequest,
+    ExcelImportResponse
 } from '../types';
 
 class ApiService {
@@ -138,6 +148,197 @@ class ApiService {
     async getNomenclatureItem(shopId: string, itemId: string): Promise<NomenclatureItem> {
         const response = await this.api.get<NomenclatureItem>(
             `/shops/${shopId}/nomenclature/${itemId}`
+        );
+        return response.data;
+    }
+
+    // Counterparty Contract endpoints
+    async getCounterpartyContracts(
+        shopId: string,
+        page = 0,
+        size = 20,
+        search?: string
+    ): Promise<PageResponse<CounterpartyContract>> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+        if (search) params.append('search', search);
+
+        const response = await this.api.get<PageResponse<CounterpartyContract>>(
+            `/shops/${shopId}/counterparties?${params}`
+        );
+        return response.data;
+    }
+
+    async getCounterpartyContractsList(shopId: string): Promise<CounterpartyContract[]> {
+        const response = await this.api.get<CounterpartyContract[]>(
+            `/shops/${shopId}/counterparties/list`
+        );
+        return response.data;
+    }
+
+    async getCounterpartyContract(shopId: string, contractId: string): Promise<CounterpartyContract> {
+        const response = await this.api.get<CounterpartyContract>(
+            `/shops/${shopId}/counterparties/${contractId}`
+        );
+        return response.data;
+    }
+
+    async createCounterpartyContract(shopId: string, data: CreateCounterpartyContractRequest): Promise<CounterpartyContract> {
+        const response = await this.api.post<CounterpartyContract>(
+            `/shops/${shopId}/counterparties`,
+            data
+        );
+        return response.data;
+    }
+
+    async updateCounterpartyContract(
+        shopId: string,
+        contractId: string,
+        data: UpdateCounterpartyContractRequest
+    ): Promise<CounterpartyContract> {
+        const response = await this.api.put<CounterpartyContract>(
+            `/shops/${shopId}/counterparties/${contractId}`,
+            data
+        );
+        return response.data;
+    }
+
+    async deleteCounterpartyContract(shopId: string, contractId: string): Promise<void> {
+        await this.api.delete(`/shops/${shopId}/counterparties/${contractId}`);
+    }
+
+    // Receipt endpoints
+    async getReceipts(
+        shopId: string,
+        page = 0,
+        size = 20,
+        search?: string,
+        startDate?: string,
+        endDate?: string,
+        counterpartyContractId?: string
+    ): Promise<PageResponse<Receipt>> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+        if (search) params.append('search', search);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (counterpartyContractId) params.append('counterpartyContractId', counterpartyContractId);
+
+        const response = await this.api.get<PageResponse<Receipt>>(
+            `/shops/${shopId}/receipts?${params}`
+        );
+        return response.data;
+    }
+
+    async getReceipt(shopId: string, receiptId: string): Promise<Receipt> {
+        const response = await this.api.get<Receipt>(
+            `/shops/${shopId}/receipts/${receiptId}`
+        );
+        return response.data;
+    }
+
+    async createReceipt(shopId: string, data: CreateReceiptRequest): Promise<Receipt> {
+        const response = await this.api.post<Receipt>(
+            `/shops/${shopId}/receipts`,
+            data
+        );
+        return response.data;
+    }
+
+    async updateReceipt(shopId: string, receiptId: string, data: UpdateReceiptRequest): Promise<Receipt> {
+        const response = await this.api.put<Receipt>(
+            `/shops/${shopId}/receipts/${receiptId}`,
+            data
+        );
+        return response.data;
+    }
+
+    async deleteReceipt(shopId: string, receiptId: string): Promise<void> {
+        await this.api.delete(`/shops/${shopId}/receipts/${receiptId}`);
+    }
+
+    // Receipt Item endpoints
+    async getReceiptItems(
+        shopId: string,
+        receiptId: string,
+        page = 0,
+        size = 50,
+        search?: string
+    ): Promise<PageResponse<ReceiptItem>> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+        if (search) params.append('search', search);
+
+        const response = await this.api.get<PageResponse<ReceiptItem>>(
+            `/shops/${shopId}/receipts/${receiptId}/items?${params}`
+        );
+        return response.data;
+    }
+
+    async getReceiptItem(shopId: string, receiptId: string, itemId: string): Promise<ReceiptItem> {
+        const response = await this.api.get<ReceiptItem>(
+            `/shops/${shopId}/receipts/${receiptId}/items/${itemId}`
+        );
+        return response.data;
+    }
+
+    async createReceiptItem(
+        shopId: string,
+        receiptId: string,
+        data: CreateReceiptItemRequest
+    ): Promise<ReceiptItem> {
+        const response = await this.api.post<ReceiptItem>(
+            `/shops/${shopId}/receipts/${receiptId}/items`,
+            data
+        );
+        return response.data;
+    }
+
+    async updateReceiptItem(
+        shopId: string,
+        receiptId: string,
+        itemId: string,
+        data: UpdateReceiptItemRequest
+    ): Promise<ReceiptItem> {
+        const response = await this.api.put<ReceiptItem>(
+            `/shops/${shopId}/receipts/${receiptId}/items/${itemId}`,
+            data
+        );
+        return response.data;
+    }
+
+    async deleteReceiptItem(shopId: string, receiptId: string, itemId: string): Promise<void> {
+        await this.api.delete(`/shops/${shopId}/receipts/${receiptId}/items/${itemId}`);
+    }
+
+    // Excel Import endpoint
+    async importReceiptItems(
+        shopId: string,
+        receiptId: string,
+        file: File,
+        mapping: Record<string, string>,
+        hasHeader = true,
+        strict = true
+    ): Promise<ExcelImportResponse> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('mapping', JSON.stringify({ mapping, hasHeader }));
+        formData.append('strict', strict.toString());
+
+        const response = await this.api.post<ExcelImportResponse>(
+            `/shops/${shopId}/receipts/${receiptId}/items/import`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
         );
         return response.data;
     }

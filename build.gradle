@@ -47,6 +47,10 @@ dependencies {
     // HTTP Client for external APIs
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     
+    // Excel processing
+    implementation 'org.apache.poi:poi:5.2.4'
+    implementation 'org.apache.poi:poi-ooxml:5.2.4'
+    
     // Utilities
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
