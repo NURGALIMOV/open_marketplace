@@ -70,6 +70,12 @@ export function ShopDetailPage(): HTMLElement {
                     </div>
                     <div class="card-body">
                         <div class="space-y-4">
+                            <button class="btn btn-outline btn-full" id="counterparties-btn">
+                                🤝 Контрагенты и договоры
+                            </button>
+                            <button class="btn btn-outline btn-full" id="receipts-btn">
+                                📦 Приемки
+                            </button>
                             <button class="btn btn-outline btn-full" id="edit-shop-btn">
                                 ⚙️ Редактировать магазин
                             </button>
@@ -107,6 +113,14 @@ export function ShopDetailPage(): HTMLElement {
         
         if (target.matches('#view-nomenclature-btn')) {
             router.navigate(`/shops/${shopId}/nomenclature`);
+        }
+        
+        if (target.matches('#counterparties-btn')) {
+            router.navigate(`/shops/${shopId}/counterparties`);
+        }
+        
+        if (target.matches('#receipts-btn')) {
+            router.navigate(`/shops/${shopId}/receipts`);
         }
         
         if (target.matches('#edit-shop-btn')) {

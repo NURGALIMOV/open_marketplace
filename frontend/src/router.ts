@@ -6,7 +6,10 @@ import {
     ShopsPage, 
     ShopDetailPage, 
     NomenclaturePage, 
-    AdminPage 
+    AdminPage,
+    CounterpartiesPage,
+    ReceiptsPage,
+    ReceiptDetailPage
 } from './pages';
 
 class Router {
@@ -46,6 +49,21 @@ class Router {
             component: AdminPage,
             requiresAuth: true,
             requiresAdmin: true,
+        },
+        {
+            path: '/shops/:id/counterparties',
+            component: CounterpartiesPage,
+            requiresAuth: true,
+        },
+        {
+            path: '/shops/:id/receipts',
+            component: ReceiptsPage,
+            requiresAuth: true,
+        },
+        {
+            path: '/shops/:shopId/receipts/:receiptId',
+            component: ReceiptDetailPage,
+            requiresAuth: true,
         },
     ];
 

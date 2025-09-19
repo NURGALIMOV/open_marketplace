@@ -10,5 +10,8 @@
     <include file="db/changelog/003-create-nomenclature-table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/004-create-audit-logs-table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/005-create-indexes.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/006-create-counterparties-contracts-table.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/007-create-receipts-table.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/008-create-receipt-items-table.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

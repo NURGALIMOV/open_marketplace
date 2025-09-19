@@ -5,7 +5,7 @@ CREATE TABLE nomenclature (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     shop_id UUID NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
     article TEXT, -- offer_id from Ozon
-    sku BIGINT NOT NULL, -- SKU from Ozon
+    sku BIGINT NOT NULL UNIQUE, -- SKU from Ozon
     weight NUMERIC(10,4), -- volume_weight from Ozon
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),

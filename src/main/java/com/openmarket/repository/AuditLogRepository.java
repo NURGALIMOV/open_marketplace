@@ -1,16 +1,10 @@
 package com.openmarket.repository;
 
-import com.openmarket.entity.AuditLog;
-import com.openmarket.entity.Shop;
-import com.openmarket.entity.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.openmarket.dto.receipt.CreateReceiptRequest;
+import com.openmarket.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -18,49 +12,112 @@ import java.util.UUID;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
 
-    default AuditLog saveShopAuditLog(UUID userId, String action, Shop shop) {
-        AuditLog auditLog = AuditLog.create(userId, "CREATE_SHOP", "SHOP", shop.getId());
+    default void saveShopAuditLog(UUID userId, String action, Shop shop) {
+        AuditLog auditLog = AuditLog.create(userId, action, "SHOP", shop.getId());
         auditLog.setPayload(Map.of(
                 "name", shop.getName(),
                 "externalId", Objects.nonNull(shop.getExternalId()) ? shop.getExternalId() : "",
                 "hasToken", Objects.nonNull(shop.getTokenEncrypted())
         ));
-        return save(auditLog);
+        save(auditLog);
     }
 
-    default AuditLog saveShopAuditLog(UUID userId, Map<String, Object> changes, Shop shop) {
+    default void saveShopAuditLog(UUID userId, Map<String, Object> changes, Shop shop) {
         AuditLog auditLog = AuditLog.create(userId, "UPDATE_SHOP", "SHOP", shop.getId());
         auditLog.setPayload(changes);
-        return save(auditLog);
+        save(auditLog);
     }
 
-    default AuditLog saveNomenclatureAuditLog(UUID userId, String action, Map<String, Object> changes, Shop shop) {
-        AuditLog auditLog = AuditLog.create(userId, "UPDATE_NOMENCLATURE_MANUAL", "SHOP", shop.getId());
+    default void saveNomenclatureAuditLog(UUID userId, String action, Map<String, Object> changes, Shop shop) {
+        AuditLog auditLog = AuditLog.create(userId, action, "SHOP", shop.getId());
         auditLog.setPayload(changes);
-        return save(auditLog);
+        save(auditLog);
     }
 
-    default AuditLog saveUserAuditLog(UUID userId, String action, Map<String, Object> changes) {
+    default void saveUserAuditLog(UUID userId, String action, Map<String, Object> changes) {
         AuditLog auditLog = AuditLog.create(userId, action, "USER", userId);
         auditLog.setPayload(changes);
-        return save(auditLog);
+        save(auditLog);
     }
 
-    default AuditLog saveUserAuditLog(UUID actorId, String action, Map<String, Object> changes, User user) {
+    default void saveUserAuditLog(UUID actorId, String action, Map<String, Object> changes, User user) {
         AuditLog auditLog = AuditLog.create(actorId, action, "USER", user.getId());
         auditLog.setPayload(changes);
-        return save(auditLog);
+        save(auditLog);
     }
 
-    Page<AuditLog> findByActorIdOrderByCreatedAtDesc(UUID actorId, Pageable pageable);
+    default void saveCounterpartyContractAuditLog(CounterpartyContract entity, UUID userId, String action) {
+        Map<String, Object> payload = Map.of(
+                "counterparty", entity.getCounterparty(),
+                "contract", entity.getContract()
+        );
+        AuditLog counterpartyContract = AuditLog.create(
+                userId,
+                action,
+                "COUNTERPARTY_CONTRACT",
+                entity.getId(),
+                payload
+        );
+        save(counterpartyContract);
+    }
 
-    Page<AuditLog> findByEntityTypeAndEntityIdOrderByCreatedAtDesc(String entityType, UUID entityId, Pageable pageable);
+    default void saveCounterpartyContractAuditLog(UUID userId, CounterpartyContract entity, Map<String, Object> changes) {
+        save(AuditLog.create(userId, "UPDATE_COUNTERPARTY_CONTRACT", "COUNTERPARTY_CONTRACT", entity.getId(), changes));
+    }
 
-    @Query("SELECT a FROM AuditLog a WHERE a.createdAt >= :fromDate ORDER BY a.createdAt DESC")
-    Page<AuditLog> findRecentLogs(@Param("fromDate") OffsetDateTime fromDate, Pageable pageable);
+    default void saveReceiptItemAuditLog(UUID userId, ReceiptItem entity) {
+        Map<String, Object> payload = Map.of(
+                "sku", entity.getSku() != null ? entity.getSku() : "null",
+                "article", entity.getArticle() != null ? entity.getArticle() : "null",
+                "quantity", entity.getQuantity(),
+                "cost", entity.getCost(),
+                "totalCost", entity.getTotalCost()
+        );
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                "CREATE_RECEIPT_ITEM",
+                "RECEIPT_ITEM",
+                entity.getId(),
+                payload
+        );
+        save(auditLog);
+    }
 
-    @Query("SELECT a FROM AuditLog a WHERE a.action = :action AND a.createdAt >= :fromDate ORDER BY a.createdAt DESC")
-    Page<AuditLog> findByActionAndDateRange(@Param("action") String action, 
-                                          @Param("fromDate") OffsetDateTime fromDate, 
-                                          Pageable pageable);
+    default void saveReceiptItemAuditLog(UUID userId, String action, ReceiptItem entity, Map<String, Object> changes) {
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                action,
+                "RECEIPT_ITEM",
+                entity.getId(),
+                changes
+        );
+        save(auditLog);
+    }
+
+    default void saveReceiptAuditLog(CreateReceiptRequest request, UUID userId, Receipt entity) {
+        Map<String, Object> payload = Map.of(
+                "name", entity.getName(),
+                "counterpartyContractId", request.getCounterpartyContractId() != null ? request.getCounterpartyContractId().toString() : "null"
+        );
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                "CREATE_RECEIPT",
+                "RECEIPT",
+                entity.getId(),
+                payload
+        );
+        save(auditLog);
+    }
+
+    default void saveReceiptAuditLog(UUID userId, Receipt entity, String action, Map<String, Object> changes) {
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                "UPDATE_RECEIPT",
+                "RECEIPT",
+                entity.getId(),
+                changes
+        );
+        save(auditLog);
+    }
+
 }

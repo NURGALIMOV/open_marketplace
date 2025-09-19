@@ -635,6 +635,56 @@ body {
     margin-bottom: 24px;
 }
 
+/* Table container for horizontal scrolling */
+.table-container {
+    overflow-x: auto;
+}
+
+/* Cursor styles */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Hover effects */
+.hover\\:bg-gray-50:hover {
+    background-color: #f9fafb;
+}
+
+.hover\\:shadow-lg:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Background colors */
+.bg-blue-50 {
+    background-color: #eff6ff;
+}
+
+.bg-gray-100 {
+    background-color: #f3f4f6;
+}
+
+/* Border colors */
+.border-blue-200 {
+    border-color: #bfdbfe;
+}
+
+/* Text colors */
+.text-blue-600 {
+    color: #2563eb;
+}
+
+.text-green-600 {
+    color: #059669;
+}
+
+.text-red-600 {
+    color: #dc2626;
+}
+
+.text-orange-600 {
+    color: #ea580c;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main {
@@ -675,5 +725,11 @@ body {
     .table th,
     .table td {
         padding: 8px 12px;
+    }
+    
+    .grid-cols-2,
+    .grid-cols-3,
+    .grid-cols-4 {
+        grid-template-columns: 1fr;
     }
 }
