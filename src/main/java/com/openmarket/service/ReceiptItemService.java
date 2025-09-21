@@ -5,8 +5,10 @@ import com.openmarket.dto.receipt.ReceiptItemResponse;
 import com.openmarket.dto.receipt.UpdateReceiptItemRequest;
 import com.openmarket.entity.Receipt;
 import com.openmarket.entity.ReceiptItem;
+import com.openmarket.exception.AppBusinessException;
 import com.openmarket.exception.AppNotFoundException;
 import com.openmarket.repository.AuditLogRepository;
+import com.openmarket.repository.NomenclatureRepository;
 import com.openmarket.repository.ReceiptItemRepository;
 import com.openmarket.repository.ReceiptRepository;
 import com.openmarket.repository.ShopRepository;
@@ -31,6 +33,7 @@ public class ReceiptItemService {
     private final ReceiptItemRepository receiptItemRepository;
     private final ReceiptRepository receiptRepository;
     private final ShopRepository shopRepository;
+    private final NomenclatureRepository nomenclatureRepository;
     private final AuditLogRepository auditLogRepository;
     private final ReceiptService receiptService;
 
@@ -42,6 +45,13 @@ public class ReceiptItemService {
         shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Receipt receipt = receiptRepository.findByIdAndShopId(receiptId, shopId)
                 .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
+        
+        // Validate SKU exists in shop's nomenclature (if SKU is provided)
+        if (Objects.nonNull(request.getSku())) {
+            nomenclatureRepository.findByShopIdAndSku(shopId, request.getSku())
+                    .orElseThrow(() -> new AppBusinessException("SKU %s not found in shop nomenclature".formatted(request.getSku())));
+        }
+        
         ReceiptItem entity = receiptItemRepository.saveReceiptItem(request, receipt);
         receiptService.recalculateTotalCost(receiptId);
         auditLogRepository.saveReceiptItemAuditLog(userId, entity);
@@ -90,6 +100,10 @@ public class ReceiptItemService {
                 .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_ITEM_NOT_FOUND));
         Map<String, Object> changes = new HashMap<>();
         if (Objects.nonNull(request.getSku()) && !Objects.equals(request.getSku(), entity.getSku())) {
+            // Validate new SKU exists in shop's nomenclature
+            nomenclatureRepository.findByShopIdAndSku(shopId, request.getSku())
+                    .orElseThrow(() -> new AppBusinessException("SKU %s not found in shop nomenclature".formatted(request.getSku())));
+            
             changes.put("sku", Map.of("old", entity.getSku(), "new", request.getSku()));
             entity.setSku(request.getSku());
         }
