@@ -3,11 +3,13 @@ package com.openmarket.service;
 import com.openmarket.dto.receipt.ExcelImportRequest;
 import com.openmarket.dto.receipt.ExcelImportResponse;
 import com.openmarket.dto.receipt.ImportError;
+import com.openmarket.entity.Nomenclature;
 import com.openmarket.entity.Receipt;
 import com.openmarket.entity.ReceiptItem;
 import com.openmarket.exception.AppBusinessException;
 import com.openmarket.exception.AppNotFoundException;
 import com.openmarket.repository.AuditLogRepository;
+import com.openmarket.repository.NomenclatureRepository;
 import com.openmarket.repository.ReceiptItemRepository;
 import com.openmarket.repository.ReceiptRepository;
 import com.openmarket.repository.ShopRepository;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -47,6 +50,7 @@ public class ReceiptItemsExcelImportService {
     private final ReceiptItemRepository receiptItemRepository;
     private final ReceiptRepository receiptRepository;
     private final ShopRepository shopRepository;
+    private final NomenclatureRepository nomenclatureRepository;
     private final AuditLogRepository auditLogRepository;
     private final ReceiptService receiptService;
 
@@ -66,6 +70,13 @@ public class ReceiptItemsExcelImportService {
         validateFile(file);
         validateMapping(importRequest.getMapping());
         BigDecimal initialTotalCost = receipt.getTotalCost();
+        
+        // Load shop nomenclature for validation
+        Map<Long, Nomenclature> shopNomenclature = nomenclatureRepository.findByShopId(shopId).stream().collect(Collectors.toMap(
+                Nomenclature::getSku,
+                Function.identity()
+        ));
+        
         List<ImportError> errors = new ArrayList<>();
         List<ReceiptItem> createdItems = new ArrayList<>();
         try (Workbook workbook = createWorkbook(file)) {
@@ -78,7 +89,7 @@ public class ReceiptItemsExcelImportService {
             Map<String, Integer> columnMapping = parseColumnMapping(importRequest.getMapping());
             int rowsProcessed = 0;
             for (int rowIndex = startRow; rowIndex <= lastRowNum; rowIndex++) {
-                rowsProcessed = rowProcessing(importRequest, sheet, rowIndex, rowsProcessed, columnMapping, receipt, createdItems, errors);
+                rowsProcessed = rowProcessing(importRequest, sheet, rowIndex, rowsProcessed, columnMapping, receipt, shopNomenclature, createdItems, errors);
             }
             if (!createdItems.isEmpty()) {
                 receiptItemRepository.saveAll(createdItems);
@@ -114,13 +125,14 @@ public class ReceiptItemsExcelImportService {
                               int rowsProcessed,
                               Map<String, Integer> columnMapping,
                               Receipt receipt,
+                              Map<Long, Nomenclature> shopNomenclature,
                               List<ReceiptItem> createdItems,
                               List<ImportError> errors) {
         Row row = sheet.getRow(rowIndex);
         if (Objects.nonNull(row)) {
             rowsProcessed++;
             try {
-                Optional.ofNullable(parseRowToReceiptItem(row, columnMapping, receipt)).ifPresent(createdItems::add);
+                Optional.ofNullable(parseRowToReceiptItem(row, columnMapping, receipt, shopNomenclature)).ifPresent(createdItems::add);
             } catch (Exception e) {
                 errors.add(ImportError.builder().row(rowIndex + 1).error(e.getMessage()).build());
                 if (importRequest.isStrict()) {
@@ -186,17 +198,31 @@ public class ReceiptItemsExcelImportService {
         return index - 1;
     }
 
-    private ReceiptItem parseRowToReceiptItem(Row row, Map<String, Integer> columnMapping, Receipt receipt) {
-        String sku = getCellValueAsString(row, columnMapping.get(SKU_KEY));
+    private ReceiptItem parseRowToReceiptItem(Row row, Map<String, Integer> columnMapping, Receipt receipt, Map<Long, Nomenclature> shopNomenclature) {
+        String skuStr = getCellValueAsString(row, columnMapping.get(SKU_KEY));
         String article = getCellValueAsString(row, columnMapping.get(ARTICLE_KEY));
         String quantityStr = getCellValueAsString(row, columnMapping.get(QUANTITY_KEY));
         String costStr = getCellValueAsString(row, columnMapping.get(COST_KEY));
-        if (isEmptyRow(sku, article, quantityStr, costStr)) {
+        if (isEmptyRow(skuStr, article, quantityStr, costStr)) {
             return null;
         }
+        
+        // Parse and validate SKU
+        Long sku;
+        try {
+            sku = Long.valueOf(skuStr.trim());
+        } catch (NumberFormatException e) {
+            throw new AppBusinessException("Invalid SKU format: %s".formatted(skuStr));
+        }
+        
+        // Validate SKU exists in shop's nomenclature
+        if (!shopNomenclature.containsKey(sku)) {
+            throw new AppBusinessException("SKU %s not found in shop nomenclature".formatted(sku));
+        }
+        
         ReceiptItem item = new ReceiptItem();
         item.setReceipt(receipt);
-        item.setSku(Long.valueOf(sku));
+        item.setSku(sku);
         item.setArticle(article);
         if (StringUtils.hasText(quantityStr)) {
             try {
