@@ -27,7 +27,8 @@ import {
     ShipmentItem,
     CreateShipmentItemRequest,
     UpdateShipmentItemRequest,
-    ShipmentImportResponse
+    ShipmentImportResponse,
+    ShipmentApiImportResponse
 } from '../types';
 
 class ApiService {
@@ -491,6 +492,14 @@ class ApiService {
                     'Content-Type': 'multipart/form-data',
                 },
             }
+        );
+        return response.data;
+    }
+
+    // Shipment API Import endpoint
+    async importShipmentsFromApi(shopId: string): Promise<ShipmentApiImportResponse> {
+        const response = await this.api.post<ShipmentApiImportResponse>(
+            `/shops/${shopId}/shipments/import/api`
         );
         return response.data;
     }

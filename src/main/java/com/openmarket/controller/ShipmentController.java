@@ -2,6 +2,7 @@ package com.openmarket.controller;
 
 import com.openmarket.dto.shipment.*;
 import com.openmarket.security.UserPrincipal;
+import com.openmarket.service.ShipmentApiImportService;
 import com.openmarket.service.ShipmentExcelImportService;
 import com.openmarket.service.ShipmentService;
 import com.openmarket.utils.LogWrapper;
@@ -28,6 +29,7 @@ public class ShipmentController {
 
     private final ShipmentService shipmentService;
     private final ShipmentExcelImportService shipmentExcelImportService;
+    private final ShipmentApiImportService shipmentApiImportService;
 
 
     @PostMapping
@@ -51,6 +53,17 @@ public class ShipmentController {
                 log,
                 "importShipment",
                 () -> shipmentExcelImportService.importShipment(shopId, file, importRequest, principal.getUserId())
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/import/api")
+    public ResponseEntity<ShipmentApiImportResponse> importShipmentsFromApi(@PathVariable UUID shopId,
+                                                                            @AuthenticationPrincipal UserPrincipal principal) {
+        var response = LogWrapper.logWrap(
+                log,
+                "importShipmentsFromApi",
+                () -> shipmentApiImportService.importShipmentsFromApi(shopId, principal.getUserId())
         );
         return ResponseEntity.ok(response);
     }
