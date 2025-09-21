@@ -25,8 +25,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class CounterpartyContractService {
 
-    private static final String SHOP_NOT_FOUND = "Shop not found";
-    private static final String COUNTERPARTY_CONTRACT_NOT_FOUND = "Counterparty contract not found";
     private final CounterpartyContractRepository counterpartyContractRepository;
     private final ShopRepository shopRepository;
     private final AuditLogRepository auditLogRepository;
@@ -36,7 +34,8 @@ public class CounterpartyContractService {
      */
     @Transactional
     public CounterpartyContractResponse createCounterpartyContract(UUID shopId, CreateCounterpartyContractRequest request, UUID userId) {
-        Shop shop = shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        Shop shop = shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         if (counterpartyContractRepository.existsByShopIdAndCounterpartyAndContract(shopId, request.getCounterparty(), request.getContract())) {
             throw new AppAlreadyExistException("Counterparty contract already exists");
         }
@@ -50,7 +49,8 @@ public class CounterpartyContractService {
      * Get counterparty contracts for shop
      */
     public Page<CounterpartyContractResponse> getCounterpartyContracts(UUID shopId, UUID userId, String search, Pageable pageable) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Page<CounterpartyContract> entities = StringUtils.hasText(search) ?
                 counterpartyContractRepository.findByShopIdAndSearch(shopId, search, pageable) :
                 counterpartyContractRepository.findByShopId(shopId, pageable);
@@ -61,7 +61,8 @@ public class CounterpartyContractService {
      * Get all counterparty contracts for shop (no pagination)
      */
     public List<CounterpartyContractResponse> getCounterpartyContractsList(UUID shopId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         return counterpartyContractRepository.findByShopId(shopId).stream().map(CounterpartyContractResponse::from).toList();
     }
 
@@ -69,9 +70,11 @@ public class CounterpartyContractService {
      * Get counterparty contract by ID
      */
     public CounterpartyContractResponse getCounterpartyContract(UUID shopId, UUID contractId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         CounterpartyContract entity =
-                counterpartyContractRepository.findByIdAndShopId(contractId, shopId).orElseThrow(() -> new AppNotFoundException(COUNTERPARTY_CONTRACT_NOT_FOUND));
+                counterpartyContractRepository.findByIdAndShopId(contractId, shopId)
+                        .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND));
         return CounterpartyContractResponse.from(entity);
     }
 
@@ -83,9 +86,11 @@ public class CounterpartyContractService {
                                                                    UUID contractId,
                                                                    UpdateCounterpartyContractRequest request,
                                                                    UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         CounterpartyContract entity =
-                counterpartyContractRepository.findByIdAndShopId(contractId, shopId).orElseThrow(() -> new AppNotFoundException(COUNTERPARTY_CONTRACT_NOT_FOUND));
+                counterpartyContractRepository.findByIdAndShopId(contractId, shopId)
+                        .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND));
         Map<String, Object> changes = new HashMap<>();
         if (StringUtils.hasText(request.getCounterparty()) && !request.getCounterparty().equals(entity.getCounterparty())) {
             changes.put("counterparty", Map.of("old", entity.getCounterparty(), "new", request.getCounterparty()));
@@ -112,9 +117,11 @@ public class CounterpartyContractService {
      */
     @Transactional
     public void deleteCounterpartyContract(UUID shopId, UUID contractId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         CounterpartyContract entity =
-                counterpartyContractRepository.findByIdAndShopId(contractId, shopId).orElseThrow(() -> new AppNotFoundException(COUNTERPARTY_CONTRACT_NOT_FOUND));
+                counterpartyContractRepository.findByIdAndShopId(contractId, shopId)
+                        .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND));
         auditLogRepository.saveCounterpartyContractAuditLog(entity, userId, "DELETE_COUNTERPARTY_CONTRACT");
         counterpartyContractRepository.delete(entity);
         log.info("Counterparty contract deleted: {} - {}", entity.getCounterparty(), entity.getContract());

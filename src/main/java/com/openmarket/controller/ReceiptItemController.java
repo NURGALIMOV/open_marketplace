@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openmarket.dto.receipt.*;
 import com.openmarket.exception.AppBusinessException;
 import com.openmarket.security.UserPrincipal;
-import com.openmarket.service.ExcelImportService;
+import com.openmarket.service.ReceiptItemsExcelImportService;
 import com.openmarket.service.ReceiptItemService;
 import com.openmarket.utils.LogWrapper;
 import jakarta.validation.Valid;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ReceiptItemController {
 
     private final ReceiptItemService receiptItemService;
-    private final ExcelImportService excelImportService;
+    private final ReceiptItemsExcelImportService receiptItemsExcelImportService;
     private final ObjectMapper objectMapper;
 
     @PostMapping
@@ -114,7 +114,7 @@ public class ReceiptItemController {
                     try {
                         ExcelImportRequest importRequest = objectMapper.readValue(mappingJson, ExcelImportRequest.class);
                         importRequest.setStrict(strict);
-                        return excelImportService.importReceiptItems(shopId, receiptId, file, importRequest, principal.getUserId());
+                        return receiptItemsExcelImportService.importReceiptItems(shopId, receiptId, file, importRequest, principal.getUserId());
                     } catch (Exception e) {
                         throw new AppBusinessException("Failed to parse import request: %s".formatted(e.getMessage()), e);
                     }

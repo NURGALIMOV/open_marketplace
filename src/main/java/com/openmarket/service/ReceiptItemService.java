@@ -28,9 +28,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReceiptItemService {
 
-    private static final String SHOP_NOT_FOUND = "Shop not found";
-    private static final String RECEIPT_NOT_FOUND = "Receipt not found";
-    private static final String RECEIPT_ITEM_NOT_FOUND = "Receipt item not found";
     private final ReceiptItemRepository receiptItemRepository;
     private final ReceiptRepository receiptRepository;
     private final ShopRepository shopRepository;
@@ -42,8 +39,9 @@ public class ReceiptItemService {
      */
     @Transactional
     public ReceiptItemResponse createReceiptItem(UUID shopId, UUID receiptId, CreateReceiptItemRequest request, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        Receipt receipt = receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        Receipt receipt = receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         ReceiptItem entity = receiptItemRepository.saveReceiptItem(request, receipt);
         receiptService.recalculateTotalCost(receiptId);
         auditLogRepository.saveReceiptItemAuditLog(userId, entity);
@@ -55,8 +53,9 @@ public class ReceiptItemService {
      * Get receipt items
      */
     public Page<ReceiptItemResponse> getReceiptItems(UUID shopId, UUID receiptId, UUID userId, String search, Pageable pageable) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         Page<ReceiptItem> entities = StringUtils.hasText(search) ?
                 receiptItemRepository.findByReceiptIdAndSearch(receiptId, search, pageable) :
                 receiptItemRepository.findByReceiptId(receiptId, pageable);
@@ -67,9 +66,11 @@ public class ReceiptItemService {
      * Get receipt item by ID
      */
     public ReceiptItemResponse getReceiptItem(UUID shopId, UUID receiptId, UUID itemId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
-        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId).orElseThrow(() -> new AppNotFoundException(RECEIPT_ITEM_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
+        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_ITEM_NOT_FOUND));
         return ReceiptItemResponse.from(entity);
     }
 
@@ -82,9 +83,11 @@ public class ReceiptItemService {
                                                  UUID itemId,
                                                  UpdateReceiptItemRequest request,
                                                  UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
-        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId).orElseThrow(() -> new AppNotFoundException(RECEIPT_ITEM_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
+        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_ITEM_NOT_FOUND));
         Map<String, Object> changes = new HashMap<>();
         if (Objects.nonNull(request.getSku()) && !Objects.equals(request.getSku(), entity.getSku())) {
             changes.put("sku", Map.of("old", entity.getSku(), "new", request.getSku()));
@@ -118,9 +121,11 @@ public class ReceiptItemService {
      */
     @Transactional
     public void deleteReceiptItem(UUID shopId, UUID receiptId, UUID itemId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
-        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId).orElseThrow(() -> new AppNotFoundException(RECEIPT_ITEM_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
+        ReceiptItem entity = receiptItemRepository.findByIdAndReceiptId(itemId, receiptId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_ITEM_NOT_FOUND));
         Map<String, Object> payload = Map.of(
                 "sku", entity.getSku() != null ? entity.getSku() : "null",
                 "article", entity.getArticle() != null ? entity.getArticle() : "null",

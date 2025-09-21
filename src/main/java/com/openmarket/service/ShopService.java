@@ -84,7 +84,8 @@ public class ShopService {
      */
     @Transactional
     public ShopResponse updateShop(UUID shopId, UpdateShopRequest request, UUID userId) {
-        Shop shop = shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException("Shop not found"));
+        Shop shop = shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Map<String, Object> changes = getChanges(request, shop);
         if (!changes.isEmpty()) {
             shop = shopRepository.save(shop);

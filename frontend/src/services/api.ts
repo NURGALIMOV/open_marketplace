@@ -20,7 +20,14 @@ import {
     ReceiptItem,
     CreateReceiptItemRequest,
     UpdateReceiptItemRequest,
-    ExcelImportResponse
+    ExcelImportResponse,
+    Shipment,
+    CreateShipmentRequest,
+    UpdateShipmentRequest,
+    ShipmentItem,
+    CreateShipmentItemRequest,
+    UpdateShipmentItemRequest,
+    ShipmentImportResponse
 } from '../types';
 
 class ApiService {
@@ -333,6 +340,151 @@ class ApiService {
 
         const response = await this.api.post<ExcelImportResponse>(
             `/shops/${shopId}/receipts/${receiptId}/items/import`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+        return response.data;
+    }
+
+    // Shipment endpoints
+    async getShipments(
+        shopId: string,
+        page = 0,
+        size = 20,
+        search?: string,
+        startDate?: string,
+        endDate?: string
+    ): Promise<PageResponse<Shipment>> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+        if (search) params.append('search', search);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+
+        const response = await this.api.get<PageResponse<Shipment>>(
+            `/shops/${shopId}/shipments?${params}`
+        );
+        return response.data;
+    }
+
+    async getShipment(shopId: string, shipmentId: string): Promise<Shipment> {
+        const response = await this.api.get<Shipment>(
+            `/shops/${shopId}/shipments/${shipmentId}`
+        );
+        return response.data;
+    }
+
+    async createShipment(shopId: string, data: CreateShipmentRequest): Promise<Shipment> {
+        const response = await this.api.post<Shipment>(
+            `/shops/${shopId}/shipments`,
+            data
+        );
+        return response.data;
+    }
+
+    async updateShipment(shopId: string, shipmentId: string, data: UpdateShipmentRequest): Promise<Shipment> {
+        const response = await this.api.put<Shipment>(
+            `/shops/${shopId}/shipments/${shipmentId}`,
+            data
+        );
+        return response.data;
+    }
+
+    async deleteShipment(shopId: string, shipmentId: string): Promise<void> {
+        await this.api.delete(`/shops/${shopId}/shipments/${shipmentId}`);
+    }
+
+    // Shipment Item endpoints
+    async getShipmentItems(
+        shopId: string,
+        shipmentId: string,
+        page = 0,
+        size = 50,
+        search?: string
+    ): Promise<PageResponse<ShipmentItem>> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+        if (search) params.append('search', search);
+
+        const response = await this.api.get<PageResponse<ShipmentItem>>(
+            `/shops/${shopId}/shipments/${shipmentId}/items?${params}`
+        );
+        return response.data;
+    }
+
+    async getShipmentItem(shopId: string, shipmentId: string, itemId: string): Promise<ShipmentItem> {
+        const response = await this.api.get<ShipmentItem>(
+            `/shops/${shopId}/shipments/${shipmentId}/items/${itemId}`
+        );
+        return response.data;
+    }
+
+    async createShipmentItem(
+        shopId: string,
+        shipmentId: string,
+        data: CreateShipmentItemRequest
+    ): Promise<ShipmentItem> {
+        const response = await this.api.post<ShipmentItem>(
+            `/shops/${shopId}/shipments/${shipmentId}/items`,
+            data
+        );
+        return response.data;
+    }
+
+    async updateShipmentItem(
+        shopId: string,
+        shipmentId: string,
+        itemId: string,
+        data: UpdateShipmentItemRequest
+    ): Promise<ShipmentItem> {
+        const response = await this.api.put<ShipmentItem>(
+            `/shops/${shopId}/shipments/${shipmentId}/items/${itemId}`,
+            data
+        );
+        return response.data;
+    }
+
+    async deleteShipmentItem(shopId: string, shipmentId: string, itemId: string): Promise<void> {
+        await this.api.delete(`/shops/${shopId}/shipments/${shipmentId}/items/${itemId}`);
+    }
+
+    // Shipment Excel Import endpoint
+    async importShipment(
+        shopId: string,
+        file: File,
+        mapping: Record<string, string>,
+        shipmentDate: string,
+        hasHeader = true,
+        strict = true,
+        startRow = 1
+    ): Promise<ShipmentImportResponse> {
+        const importRequest = {
+            mapping,
+            hasHeader,
+            strict,
+            shipmentDate,
+            startRow
+        };
+
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Add JSON data as a separate part with correct content type
+        const importRequestBlob = new Blob([JSON.stringify(importRequest)], {
+            type: 'application/json'
+        });
+        formData.append('importRequest', importRequestBlob);
+
+        const response = await this.api.post<ShipmentImportResponse>(
+            `/shops/${shopId}/shipments/import`,
             formData,
             {
                 headers: {
