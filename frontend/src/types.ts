@@ -198,6 +198,66 @@ export interface ModalOptions {
     onClose?: () => void;
 }
 
+// Shipment types
+export interface Shipment {
+    id: string;
+    shipmentNumber: string;
+    shipmentDate: string;
+    totalQuantity: number;
+    itemsCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateShipmentRequest {
+    shipmentNumber: string;
+    shipmentDate: string;
+}
+
+export interface UpdateShipmentRequest {
+    shipmentNumber?: string;
+    shipmentDate?: string;
+}
+
+// Shipment Item types
+export interface ShipmentItem {
+    id: string;
+    sku: string;
+    article?: string;
+    quantity: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateShipmentItemRequest {
+    sku: string;
+    article?: string;
+    quantity: number;
+}
+
+export interface UpdateShipmentItemRequest {
+    sku?: string;
+    article?: string;
+    quantity?: number;
+}
+
+// Shipment Import types
+export interface ShipmentImportRequest {
+    mapping: Record<string, string>; // field -> column mapping
+    hasHeader?: boolean;
+    strict?: boolean;
+    shipmentDate: string;
+    startRow?: number; // Starting row for parsing (1-based index)
+}
+
+export interface ShipmentImportResponse {
+    shipmentId: string;
+    rowsProcessed: number;
+    rowsCreated: number;
+    totalQuantityDelta: number;
+    errors: ImportError[];
+}
+
 // Application State
 export interface AppState {
     user: User | null;

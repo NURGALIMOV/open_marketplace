@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 public class NomenclatureService {
 
     private static final String ERROR_KEY = "error";
-    private static final String SHOP_NOT_FOUND = "Shop not found";
     private final NomenclatureRepository nomenclatureRepository;
     private final AuditLogRepository auditLogRepository;
     private final ShopService shopService;
@@ -43,7 +42,7 @@ public class NomenclatureService {
                                                           UUID userId,
                                                           String search,
                                                           Pageable pageable) {
-        shopService.getShopEntity(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopService.getShopEntity(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Page<Nomenclature> nomenclaturePage = StringUtils.hasText(search) ?
                 nomenclatureRepository.findByShopIdAndSearch(shopId, search, pageable) :
                 nomenclatureRepository.findByShopId(shopId, pageable);
@@ -54,7 +53,7 @@ public class NomenclatureService {
      * Get nomenclature statistics for shop
      */
     public Map<String, Object> getShopNomenclatureStats(UUID shopId, UUID userId) {
-        shopService.getShopEntity(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopService.getShopEntity(shopId, userId).orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         long totalCount = nomenclatureRepository.countByShopId(shopId);
         long updatedCount = nomenclatureRepository.countUpdatedByShopId(shopId);
         return Map.of(
@@ -69,7 +68,8 @@ public class NomenclatureService {
      */
     @Transactional
     public Map<String, Object> updateShopNomenclatureManual(UUID shopId, UUID userId) {
-        Shop shop = shopService.getShopEntity(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        Shop shop = shopService.getShopEntity(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         if (Objects.isNull(shop.getExternalId()) || Objects.isNull(shop.getTokenEncrypted())) {
             throw new AppBusinessException("Shop must have external ID and API token configured");
         }

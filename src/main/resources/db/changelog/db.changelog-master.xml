@@ -13,5 +13,7 @@
     <include file="db/changelog/006-create-counterparties-contracts-table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/007-create-receipts-table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/008-create-receipt-items-table.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/009-create-shipments-table.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/010-create-shipment-items-table.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

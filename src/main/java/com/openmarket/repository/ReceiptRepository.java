@@ -4,7 +4,7 @@ import com.openmarket.dto.receipt.CreateReceiptRequest;
 import com.openmarket.entity.CounterpartyContract;
 import com.openmarket.entity.Receipt;
 import com.openmarket.entity.Shop;
-import com.openmarket.exception.AppBusinessException;
+import com.openmarket.exception.AppNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,12 +27,12 @@ public interface ReceiptRepository extends JpaRepository<Receipt, UUID> {
         entity.setName(request.getName());
         entity.setRequestNumber(request.getRequestNumber());
         entity.setReceiptDate(request.getReceiptDate());
-        if (Objects.nonNull(request.getCounterpartyContractId())) {
+        if (Objects.nonNull(request.getCounterpartyContractId()) && Objects.nonNull(supplier)) {
             CounterpartyContract counterpartyContract = supplier.get();
             entity.setCounterpartyContract(counterpartyContract);
             entity.setContract(counterpartyContract.getContract());
         } else {
-            throw new AppBusinessException("Counterparty contract not found");
+            throw new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND);
         }
         return save(entity);
     }

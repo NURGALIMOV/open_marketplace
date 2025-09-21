@@ -1,6 +1,7 @@
 package com.openmarket.repository;
 
 import com.openmarket.dto.receipt.CreateReceiptRequest;
+import com.openmarket.dto.shipment.CreateShipmentRequest;
 import com.openmarket.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -112,8 +113,61 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     default void saveReceiptAuditLog(UUID userId, Receipt entity, String action, Map<String, Object> changes) {
         AuditLog auditLog = AuditLog.create(
                 userId,
-                "UPDATE_RECEIPT",
+                action,
                 "RECEIPT",
+                entity.getId(),
+                changes
+        );
+        save(auditLog);
+    }
+
+    default void saveShipmentAuditLog(CreateShipmentRequest request, UUID userId, Shipment entity) {
+        Map<String, Object> payload = Map.of(
+                "shipmentNumber", entity.getShipmentNumber(),
+                "shipmentDate", entity.getShipmentDate().toString()
+        );
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                "CREATE_SHIPMENT",
+                "SHIPMENT",
+                entity.getId(),
+                payload
+        );
+        save(auditLog);
+    }
+
+    default void saveShipmentAuditLog(UUID userId, Shipment entity, String action, Map<String, Object> changes) {
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                action,
+                "SHIPMENT",
+                entity.getId(),
+                changes
+        );
+        save(auditLog);
+    }
+
+    default void saveShipmentItemAuditLog(UUID userId, ShipmentItem entity) {
+        Map<String, Object> payload = Map.of(
+                "sku", entity.getSku() != null ? entity.getSku() : "null",
+                "article", entity.getArticle() != null ? entity.getArticle() : "null",
+                "quantity", entity.getQuantity()
+        );
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                "CREATE_SHIPMENT_ITEM",
+                "SHIPMENT_ITEM",
+                entity.getId(),
+                payload
+        );
+        save(auditLog);
+    }
+
+    default void saveShipmentItemAuditLog(UUID userId, String action, ShipmentItem entity, Map<String, Object> changes) {
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                action,
+                "SHIPMENT_ITEM",
                 entity.getId(),
                 changes
         );

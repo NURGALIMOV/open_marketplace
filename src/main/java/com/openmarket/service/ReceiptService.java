@@ -29,8 +29,6 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class ReceiptService {
 
-    private static final String SHOP_NOT_FOUND = "Shop not found";
-    private static final String RECEIPT_NOT_FOUND = "Receipt not found";
     private final ReceiptRepository receiptRepository;
     private final ShopRepository shopRepository;
     private final CounterpartyContractRepository counterpartyContractRepository;
@@ -42,9 +40,11 @@ public class ReceiptService {
      */
     @Transactional
     public ReceiptResponse createReceipt(UUID shopId, CreateReceiptRequest request, UUID userId) {
-        Shop shop = shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        Shop shop = shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Supplier<CounterpartyContract> counterpartyContractSupplier =
-                () -> counterpartyContractRepository.findByIdAndShopId(request.getCounterpartyContractId(), shopId).orElseThrow(() -> new AppNotFoundException("Counterparty contract not found"));
+                () -> counterpartyContractRepository.findByIdAndShopId(request.getCounterpartyContractId(), shopId)
+                        .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND));
         Receipt entity = receiptRepository.saveReceipt(request, shop, counterpartyContractSupplier);
         auditLogRepository.saveReceiptAuditLog(request, userId, entity);
         log.info("Receipt created: {} for shop: {}", entity.getName(), shop.getName());
@@ -57,7 +57,8 @@ public class ReceiptService {
     public Page<ReceiptResponse> getReceipts(UUID shopId, UUID userId, String search, 
                                            LocalDate startDate, LocalDate endDate, 
                                            UUID counterpartyContractId, Pageable pageable) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
         Page<Receipt> entities;
         if (StringUtils.hasText(search)) {
             entities = receiptRepository.findByShopIdAndSearch(shopId, search, pageable);
@@ -78,8 +79,10 @@ public class ReceiptService {
      * Get receipt by ID
      */
     public ReceiptResponse getReceipt(UUID shopId, UUID receiptId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         long itemsCount = receiptItemRepository.countByReceiptId(entity.getId());
         return ReceiptResponse.from(entity, itemsCount);
     }
@@ -89,8 +92,10 @@ public class ReceiptService {
      */
     @Transactional
     public ReceiptResponse updateReceipt(UUID shopId, UUID receiptId, UpdateReceiptRequest request, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         Map<String, Object> changes = new HashMap<>();
         if (StringUtils.hasText(request.getName()) && !request.getName().equals(entity.getName())) {
             changes.put("name", Map.of("old", entity.getName(), "new", request.getName()));
@@ -108,7 +113,8 @@ public class ReceiptService {
             UUID currentContractId = Objects.nonNull(entity.getCounterpartyContract()) ? entity.getCounterpartyContract().getId() : null;
             if (!Objects.equals(request.getCounterpartyContractId(), currentContractId)) {
                 CounterpartyContract counterpartyContract =
-                        counterpartyContractRepository.findByIdAndShopId(request.getCounterpartyContractId(), shopId).orElseThrow(() -> new AppNotFoundException("Counterparty contract not found"));
+                        counterpartyContractRepository.findByIdAndShopId(request.getCounterpartyContractId(), shopId)
+                                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.COUNTERPARTY_CONTRACT_NOT_FOUND));
                 changes.put("counterpartyContract", Map.of("old", currentContractId, "new", request.getCounterpartyContractId()));
                 entity.setCounterpartyContract(counterpartyContract);
                 entity.setContract(counterpartyContract.getContract());
@@ -128,8 +134,10 @@ public class ReceiptService {
      */
     @Transactional
     public void deleteReceipt(UUID shopId, UUID receiptId, UUID userId) {
-        shopRepository.findByIdAndUserId(shopId, userId).orElseThrow(() -> new AppNotFoundException(SHOP_NOT_FOUND));
-        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        shopRepository.findByIdAndUserId(shopId, userId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.SHOP_NOT_FOUND));
+        Receipt entity = receiptRepository.findByIdAndShopId(receiptId, shopId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         Map<String, Object> payload = Map.of(
                 "name", entity.getName(),
                 "totalCost", entity.getTotalCost(),
@@ -145,7 +153,8 @@ public class ReceiptService {
      */
     @Transactional
     public void recalculateTotalCost(UUID receiptId) {
-        Receipt receipt = receiptRepository.findById(receiptId).orElseThrow(() -> new AppNotFoundException(RECEIPT_NOT_FOUND));
+        Receipt receipt = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new AppNotFoundException(AppNotFoundException.RECEIPT_NOT_FOUND));
         BigDecimal totalCost = receiptItemRepository.calculateTotalCostByReceiptId(receiptId);
         receipt.setTotalCost(totalCost);
         receiptRepository.save(receipt);

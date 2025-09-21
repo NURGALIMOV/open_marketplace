@@ -76,6 +76,9 @@ export function ShopDetailPage(): HTMLElement {
                             <button class="btn btn-outline btn-full" id="receipts-btn">
                                 📦 Приемки
                             </button>
+                            <button class="btn btn-outline btn-full" id="shipments-btn">
+                                🚚 Отгрузки
+                            </button>
                             <button class="btn btn-outline btn-full" id="edit-shop-btn">
                                 ⚙️ Редактировать магазин
                             </button>
@@ -121,6 +124,10 @@ export function ShopDetailPage(): HTMLElement {
         
         if (target.matches('#receipts-btn')) {
             router.navigate(`/shops/${shopId}/receipts`);
+        }
+        
+        if (target.matches('#shipments-btn')) {
+            router.navigate(`/shops/${shopId}/shipments`);
         }
         
         if (target.matches('#edit-shop-btn')) {
