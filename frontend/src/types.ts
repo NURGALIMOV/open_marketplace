@@ -258,6 +258,17 @@ export interface ShipmentImportResponse {
     errors: ImportError[];
 }
 
+export interface ShipmentApiImportResponse {
+    shipmentsAdded: number;
+    shipmentsSkipped: number;
+    errors: ShipmentImportError[];
+}
+
+export interface ShipmentImportError {
+    shipmentNumber: string;
+    error: string;
+}
+
 // Application State
 export interface AppState {
     user: User | null;

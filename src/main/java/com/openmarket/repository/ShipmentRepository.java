@@ -1,5 +1,6 @@
 package com.openmarket.repository;
 
+import com.openmarket.dto.ozon.SupplyOrderInfo;
 import com.openmarket.dto.shipment.CreateShipmentRequest;
 import com.openmarket.dto.shipment.ShipmentImportRequest;
 import com.openmarket.entity.Shipment;
@@ -12,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +28,21 @@ public interface ShipmentRepository extends JpaRepository<Shipment, UUID> {
         entity.setShipmentDate(request.getShipmentDate());
         entity.setTotalQuantity(0L);
         return save(entity);
+    }
+
+    default Shipment saveShipment(Shop shop, SupplyOrderInfo supplyOrder, String shipmentNumber, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+        Shipment shipment = new Shipment();
+        shipment.setShop(shop);
+        shipment.setShipmentNumber(shipmentNumber);
+        shipment.setShipmentDate(convertToLocalDate(supplyOrder.getCreationDate()));
+        shipment.setTotalQuantity(0L);
+        shipment.setCreatedAt(createdAt);
+        shipment.setUpdatedAt(updatedAt);
+        return save(shipment);
+    }
+
+    private LocalDate convertToLocalDate(OffsetDateTime dateTime) {
+        return Objects.nonNull(dateTime) ? dateTime.toLocalDate() : LocalDate.now();
     }
 
     default Shipment saveShipment(Shop shop, String shipmentNumber, ShipmentImportRequest importRequest) {

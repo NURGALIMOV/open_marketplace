@@ -147,6 +147,17 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
         save(auditLog);
     }
 
+    default void saveShipmentAuditLog(UUID userId, String action, Map<String, Object> changes, UUID shopId) {
+        AuditLog auditLog = AuditLog.create(
+                userId,
+                action,
+                "SHIPMENT",
+                shopId,
+                changes
+        );
+        save(auditLog);
+    }
+
     default void saveShipmentItemAuditLog(UUID userId, ShipmentItem entity) {
         Map<String, Object> payload = Map.of(
                 "sku", entity.getSku() != null ? entity.getSku() : "null",

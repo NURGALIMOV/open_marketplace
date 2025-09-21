@@ -1,7 +1,7 @@
 import { createLayout } from '../components/Layout';
 import { apiService } from '../services/api';
 import { router } from '../router';
-import { Shipment, PageResponse, ShipmentImportResponse } from '../types';
+import { Shipment, PageResponse, ShipmentImportResponse, ShipmentApiImportResponse } from '../types';
 import { Toast, Modal } from '../utils/ui';
 import { formatDate, formatNumber, debounce } from '../utils/ui';
 
@@ -36,9 +36,14 @@ export function ShipmentsPage(): HTMLElement {
                            placeholder="Поиск по номеру отгрузки...">
                     <span class="search-icon">🔍</span>
                 </div>
-                <button class="btn btn-primary" id="create-shipment-btn">
-                    Создать отгрузку
-                </button>
+                <div class="flex gap-2">
+                    <button class="btn btn-outline" id="import-api-btn">
+                        📥 Выгрузка отгрузок по API
+                    </button>
+                    <button class="btn btn-primary" id="create-shipment-btn">
+                        Создать отгрузку
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="shipments-table">
@@ -81,6 +86,10 @@ export function ShipmentsPage(): HTMLElement {
         
         if (target.matches('#create-shipment-btn')) {
             showCreateShipmentModal();
+        }
+        
+        if (target.matches('#import-api-btn')) {
+            handleImportFromApi();
         }
         
         if (target.matches('#prev-btn')) {
@@ -585,6 +594,115 @@ export function ShipmentsPage(): HTMLElement {
         }
         
         return null;
+    }
+
+    async function handleImportFromApi(): Promise<void> {
+        const confirmed = await Modal.confirm(
+            'Вы хотите выгрузить отгрузки из Ozon API? Это может занять некоторое время.',
+            'Выгрузка отгрузок по API'
+        );
+        
+        if (!confirmed) return;
+        
+        // Show loading
+        const { Loading } = await import('../utils/ui');
+        Loading.show('Выгрузка отгрузок из Ozon API...');
+        
+        try {
+            const result = await apiService.importShipmentsFromApi(shopId);
+            
+            Loading.hide();
+            
+            // Show success message
+            let message = `Выгрузка завершена: добавлено ${result.shipmentsAdded} отгрузок, пропущено ${result.shipmentsSkipped}`;
+            if (result.errors.length > 0) {
+                message += `, ошибок: ${result.errors.length}`;
+            }
+            
+            Toast.success(message);
+            
+            // Show detailed results if there were errors
+            if (result.errors.length > 0) {
+                showApiImportResults(result);
+            }
+            
+            // Reload shipments list
+            loadShipments();
+            
+        } catch (error: any) {
+            Loading.hide();
+            console.error('Error importing shipments from API:', error);
+            
+            if (error.response?.data?.message) {
+                Toast.error(`Ошибка выгрузки: ${error.response.data.message}`);
+            } else {
+                Toast.error('Ошибка выгрузки отгрузок из API');
+            }
+        }
+    }
+
+    function showApiImportResults(result: ShipmentApiImportResponse): void {
+        const resultsHtml = `
+            <div class="mb-4">
+                <h4 class="font-medium mb-2">Результаты выгрузки</h4>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-green-600">${result.shipmentsAdded}</div>
+                        <div class="text-sm text-gray-500">Добавлено отгрузок</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600">${result.shipmentsSkipped}</div>
+                        <div class="text-sm text-gray-500">Пропущено отгрузок</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-red-600">${result.errors.length}</div>
+                        <div class="text-sm text-gray-500">Ошибок</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${result.errors.length > 0 ? `
+                <div class="mb-4">
+                    <h5 class="font-medium mb-2">Ошибки выгрузки:</h5>
+                    <div class="max-h-60 overflow-y-auto">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Номер отгрузки</th>
+                                    <th>Ошибка</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.errors.map(error => `
+                                    <tr>
+                                        <td class="font-mono text-sm">${error.shipmentNumber}</td>
+                                        <td class="text-red-600">${error.error}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+
+        const footer = document.createElement('div');
+        footer.innerHTML = `
+            <button type="button" class="btn btn-primary" data-action="close">Закрыть</button>
+        `;
+
+        Modal.show({
+            title: 'Результаты выгрузки отгрузок',
+            content: resultsHtml,
+            footer,
+        });
+
+        footer.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            if (target.dataset.action === 'close') {
+                Modal.close();
+            }
+        });
     }
 
     // Initial load
