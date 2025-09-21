@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: open-marketplace
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  # можно добавить и другие флаги/тогглы

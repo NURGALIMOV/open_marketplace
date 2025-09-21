@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgresql:5432/open_market_placer}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  liquibase:
+    liquibase-schema: public
+    enabled: true
+
+app:
+  security:
+    encryption:
+      master-key: MySecureEncryptionKeyFor256BitAES
+    admin:
+      initial-email: admin@example.com
+      initial-password: admin123
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true

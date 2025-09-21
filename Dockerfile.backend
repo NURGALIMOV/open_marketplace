@@ -1,45 +1,24 @@
-# Build stage
-FROM eclipse-temurin:21-jdk-alpine AS builder
-
+# ---- build stage ----
+FROM gradle:8.10.2-jdk21-alpine AS build
 WORKDIR /app
 
-# Copy gradle files
-COPY build.gradle .
-COPY gradle gradle
-COPY gradlew .
-COPY settings.gradle .
+# 1) копируем только файлы сборки для кеша зависимостей
+COPY settings.gradle build.gradle gradle.properties* ./
+COPY gradle ./gradle
+# прогреваем зависимости (без исходников) — лёгкая задача, кэшируется отлично
+RUN gradle --no-daemon dependencies || true
 
-# Make gradlew executable and download dependencies
-RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+# 2) теперь копируем весь проект и собираем jar
+COPY . .
+RUN gradle clean bootJar --no-daemon
 
-# Copy source code
-COPY src src
-
-# Build application
-RUN ./gradlew build -x test --no-daemon
-
-# Runtime stage
+# ---- runtime stage ----
 FROM eclipse-temurin:21-jre-alpine
-
+ENV JAVA_TOOL_OPTIONS="-XX:+UseZGC -Xms256m -Xmx512m"
+ENV SPRING_PROFILES_ACTIVE=prod
 WORKDIR /app
-
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
-
-# Copy built jar
-COPY --from=builder /app/build/libs/*.jar app.jar
-
-# Create logs directory
-RUN mkdir -p logs && \
-    chown -R appuser:appgroup /app
-
-USER appuser
-
+# копируем единственный fat-jar
+COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/actuator/health || exit 1
-
-CMD ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+USER 1000:1000
+ENTRYPOINT ["java","-jar","/app/app.jar"]
